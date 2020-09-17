@@ -1,0 +1,29 @@
+//Server Output
+
+//Server Started
+//client says: Hi server
+//Server:
+//Hello client
+//client says: what's going on
+//Server:
+//fogg
+//client says: :-)
+//Server:
+//exit
+//null
+//client says: exit
+
+//Client output
+
+//Client:
+//Hi server
+//Waiting for Server:
+//Server:Hello client
+//Client:
+//what's going on
+//Waiting for Server:
+//Server:fogg
+//Client:
+//:-)
+//Waiting for Server:
+//Server:exit
