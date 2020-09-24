@@ -1,0 +1,175 @@
+// ********** Client.java *********** //
+
+import java.io.*; 
+import java.net.*; 
+import java.math.*;
+import java.util.*;
+  
+public class Client 
+{ 
+    public static void main(String args[]) throws IOException 
+    { 
+
+        System.out.println("\n_________________ CLIENT SIDE ________________\n");
+
+        
+        InetAddress addr = InetAddress.getByName("LocalHost");
+        Socket client = new Socket(addr,1500);
+
+        // Reading data from socket
+        BufferedInputStream din = new BufferedInputStream(client.getInputStream());
+        DataOutputStream dout = new DataOutputStream(client.getOutputStream());
+
+        // Get input form user
+        Scanner sc = new Scanner(System.in);
+        System.out.print("\nEnter No of frames: ");
+        int c = sc.nextInt();
+        dout.write(c);
+        System.out.print("\nEnter type of transmission(error-1, errorless-0): ");
+        int choice = sc.nextInt();
+        dout.write(choice);
+
+        int check=0,i=0,j=0;
+        boolean frames[] = new boolean[c];
+        if(choice==0)  //No error
+        {
+            for(j=0;j<c;j++)
+            {
+                i = din.read();
+                System.out.println("\nReceived Frame "+i);
+                System.out.println("Sending Acknowledgement "+i);
+                dout.write(i);
+            }
+        }
+        else // With Error
+        {
+            while(true)
+            {
+                for(j=0;j<c;j++)
+                {
+                    i = din.read();
+                    if(i!=255)
+                    {
+                        System.out.println("\nReceived Frame "+i);
+                        System.out.println("Sending Acknowledgement "+i);
+                        dout.write(i);
+                        frames[j] = true;
+                    }
+                    else
+                    {
+                        System.out.println("Sending Negative Acknowledgement "+i);
+                        dout.write(-1);
+                    }
+                }
+                boolean end=true;
+                for(boolean b:frames){
+                    if(b==false)
+                    {
+                        end=false;
+                        break;
+                    }
+                }
+                if(end)break;
+            }
+        }
+        din.close();
+        dout.close();
+        client.close();
+    } 
+} 
+
+
+________________________________________________________________________________________________________
+
+
+
+// ********** Server.java *********** //
+
+
+import java.io.*; 
+import java.net.*; 
+import java.math.*;
+import java.util.*;
+  
+public class Server
+{ 
+    public static void main(String[] args) throws IOException 
+    { 
+        
+        System.out.println("\n_________________ SERVER SIDE ________________\n");
+
+        
+        InetAddress addr = InetAddress.getByName("LocalHost");
+        ServerSocket ss = new ServerSocket(1500);
+        Socket server = new Socket();
+        server = ss.accept();
+
+        // Reading data from socket
+        BufferedInputStream din = new BufferedInputStream(server.getInputStream());
+        DataOutputStream dout = new DataOutputStream(server.getOutputStream());
+
+        // Reading form input stream
+        int p = din.read();
+        System.out.println("\n Number of frames to be recieved is : " + p);
+        int pc = din.read();
+
+        boolean frames[] = new boolean[p];
+        if(pc==0) // No error
+        {
+            for(int i=0;i<p;i++)
+            {
+                System.out.println("\nSending Frame "+i);
+                dout.write(i);
+                System.out.println("Waiting for Acknowledgement...");
+                try{Thread.sleep(7000);}
+                catch(Exception e){}
+                int a = din.read();
+                System.out.println("Received Acknowledgement for frame "+i+" as "+a);
+            }
+        }
+        else // With Error
+        {
+            for(int i=0;i<p;i++)
+            {
+                if(i==2)
+                {
+                    System.out.println("\nSending Frame "+i);
+                    System.out.println("Waiting for Acknowledgement...");
+                }
+                else
+                {
+                    System.out.println("\nSending Frame "+i);
+                    dout.write(i);
+                    System.out.println("Waiting for Acknowledgement...");
+                    try{Thread.sleep(7000);}
+                    catch(Exception e){}
+                    int a = din.read();
+                    if(a!=255)
+                    {
+                        System.out.println("Received Acknowledgement for frame "+i+" as "+a);
+                        frames[i] = true;
+                    }
+                }
+            }
+            
+            for(int a=0;a<p;a++)
+            {
+                if(frames[a]==false)
+                {
+                    System.out.println("\nResending Frame "+a);
+                    dout.write(a);
+                    System.out.println("Waiting for Acknowledgement...");
+                    try{Thread.sleep(7000);}
+                    catch(Exception e){}
+                    int b = din.read();
+                    System.out.println("Received Acknowledgement for frame "+a+" as "+b);
+                    frames[a]=true;
+                }
+            }
+        }
+        din.close();
+        dout.close();
+        ss.close();
+        server.close();
+    } 
+} 
